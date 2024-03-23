@@ -44,11 +44,11 @@ int main() {
 
     // Main game loop
     int packet_count = 0;
-    while (GameOn) {
+    while (TRUE) {
         // Send packets to the server
         char buffer[PACKET_SIZE];
         // Populate the buffer with packet data
-        // Example: snprintf(buffer, PACKET_SIZE, "Packet %d data", packet_count);
+        snprintf(buffer, PACKET_SIZE, "Packet %d data", packet_count);
 
         // Send the packet to the server
         n = write(sockfd, buffer, strlen(buffer));
@@ -65,12 +65,13 @@ int main() {
         packet_count++;
 
         // Sleep for some time before sending the next packet (adjust as needed)
-        sleep(.5);  // Sleep for 1 second
+        sleep(1);  // Sleep for 1 second
 
     }
-
+    printf("We leaving");
     // Close the socket
     close(sockfd);
+    printf("we left");
 
     return 0;
 }
