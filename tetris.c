@@ -130,7 +130,13 @@ void RemoveFullRowsAndUpdateScore(){
     score += 100*count;
 }
 
+struct timeval before_now, now;
+int hasToUpdate(){
+	return ((suseconds_t)(now.tv_sec*1000000 + now.tv_usec) -((suseconds_t)before_now.tv_sec*1000000 + before_now.tv_usec)) > timer;
+}
+
 void PrintTable(){
+    
         printf("Please WOrk 2");
     char Buffer[ROWS][COLS] = {0};
     int i, j;
@@ -181,21 +187,23 @@ void ManipulateCurrent(int action){
             if(CheckPosition(temp))
                 RotateShape(current);
             break;
+        case 'q':
+            GameOn = FALSE;
+            break;
     }
     DeleteShape(temp);
     PrintTable();
 }
 
 int main() {
-    initscr();
-    printf("Please WOrk");
+    printf("test \n");
     srand(time(0));
-        // printf("Please WOrk5");
     score = 0;
     int c;
-        // printf("Please WOrk3");
-    SetNewRandomShape();
-        // printf("Please WOrk4");
+    initscr();
+    gettimeofday(&before_now, NULL);
+	timeout(1);
+	SetNewRandomShape();    
     PrintTable();
 
      // Receive control command from the client
@@ -206,11 +214,12 @@ int main() {
         int n;
         
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
         if (sockfd < 0) {
             perror("Error opening socket");
             exit(EXIT_FAILURE);
         }
-        
+        printf("sockfd: %d\n", sockfd );
         memset((char *) &serv_addr, 0, sizeof(serv_addr));
 
         serv_addr.sin_family = AF_INET;
@@ -225,41 +234,51 @@ int main() {
         listen(sockfd,5);
         clilen = sizeof(cli_addr);
         refresh();
-
-    while (GameOn) {
-
-        refresh();
-
+        printf("Before While loop\n");
         newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-        refresh();
-        if (newsockfd < 0) {
-            perror("Error on accept");
-            exit(EXIT_FAILURE);
-        }
-        refresh();
+    while (GameOn) {
+    refresh();
+    // Check if there is any user input (keyboard)
+    if ((c = getch()) != ERR) {
+        ManipulateCurrent(c);
+    }
+
+    // Accept incoming connections and process data if available
+
+    if (newsockfd >= 0) {
+        // Read data from the accepted connection
         memset(buffer, 0, 256);
-        n = read(newsockfd,buffer,255);
+        n = read(newsockfd, buffer, 255);
         if (n < 0) {
             perror("Error reading from socket");
             exit(EXIT_FAILURE);
         }
-        close(newsockfd);
-        refresh();
+        // close(newsockfd);
+        
+        // Process the received data (command)
         c = buffer[0]; // Use received control command
         ManipulateCurrent(c);
-         printf("packet recieved Buffer:%s",buffer);     
-          refresh();
+        printf("Packet received Buffer:%s", buffer);
     }
-    DeleteShape(current);
-    endwin();
-    int i, j;
-    for(i = 0; i < ROWS ;i++){
-        for(j = 0; j < COLS ; j++){
-            printf("%c ", Table[i][j] ? '#': '.');
-        }
-        printf("\n");
+
+    // Check if it's time to update based on some timer
+    gettimeofday(&now, NULL);
+    if (hasToUpdate()) { // time difference in microsec accuracy
+        ManipulateCurrent('s');
+        gettimeofday(&before_now, NULL);
     }
-    printf("\nGame over!\n");
-    printf("\nScore: %d\n", score);
+}
+
+	DeleteShape(current);
+	endwin();
+	int i, j;
+	for(i = 0; i < ROWS ;i++){
+		for(j = 0; j < COLS ; j++){
+			printf("%c ", Table[i][j] ? '#': '.');
+		}
+		printf("\n");
+	}
+	printf("\nGame ouvre!\n");
+	printf("\nScore: %d\n", score);
     return 0;
 }
