@@ -12,9 +12,6 @@
 #include "PORT.h"
 #include <string.h>
 
-
-
-
 char Table[ROWS][COLS] = {0};
 int score = 0;
 char GameOn = TRUE;
@@ -134,6 +131,7 @@ void RemoveFullRowsAndUpdateScore(){
 }
 
 void PrintTable(){
+        printf("Please WOrk 2");
     char Buffer[ROWS][COLS] = {0};
     int i, j;
     for(i = 0; i < current.width ;i++){
@@ -145,7 +143,7 @@ void PrintTable(){
     clear();
     for(i=0; i<COLS-9; i++)
         printw(" ");
-    printw("Covid Tetris\n");
+    printw("Not Covid Tetris\n");
     for(i = 0; i < ROWS ;i++){
         for(j = 0; j < COLS ; j++){
             printw("%c ", (Table[i][j] + Buffer[i][j])? '#': '.');
@@ -189,14 +187,18 @@ void ManipulateCurrent(int action){
 }
 
 int main() {
+    initscr();
+    printf("Please WOrk");
     srand(time(0));
+        // printf("Please WOrk5");
     score = 0;
     int c;
-    initscr();
+        // printf("Please WOrk3");
     SetNewRandomShape();
+        // printf("Please WOrk4");
     PrintTable();
-    while (GameOn) {
-        // Receive control command from the client
+
+     // Receive control command from the client
         int sockfd, newsockfd;
         socklen_t clilen;
         char buffer[256];
@@ -222,12 +224,19 @@ int main() {
         
         listen(sockfd,5);
         clilen = sizeof(cli_addr);
+        refresh();
+
+    while (GameOn) {
+
+        refresh();
+
         newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+        refresh();
         if (newsockfd < 0) {
             perror("Error on accept");
             exit(EXIT_FAILURE);
         }
-        
+        refresh();
         memset(buffer, 0, 256);
         n = read(newsockfd,buffer,255);
         if (n < 0) {
@@ -235,9 +244,11 @@ int main() {
             exit(EXIT_FAILURE);
         }
         close(newsockfd);
-        
+        refresh();
         c = buffer[0]; // Use received control command
         ManipulateCurrent(c);
+         printf("packet recieved Buffer:%s",buffer);     
+          refresh();
     }
     DeleteShape(current);
     endwin();
