@@ -8,9 +8,10 @@
 #include <netdb.h>
 #include <stdbool.h>
 #include <ncurses.h>
+#include <string.h>
+
 #include "definitions.h"
 #include "PORT.h"
-#include <string.h>
 
 char Table[ROWS][COLS] = {0};
 int score = 0;
@@ -137,7 +138,7 @@ int hasToUpdate(){
 
 void PrintTable(){
     
-        printf("Please WOrk 2");
+        // printf("Please WOrk 2");
     char Buffer[ROWS][COLS] = {0};
     int i, j;
     for(i = 0; i < current.width ;i++){
@@ -188,6 +189,7 @@ void ManipulateCurrent(int action){
                 RotateShape(current);
             break;
         case 'q':
+            endwin();
             GameOn = FALSE;
             break;
     }
@@ -200,7 +202,12 @@ int main() {
     srand(time(0));
     score = 0;
     int c;
+
     initscr();
+    cbreak();               // Line buffering disabled
+    noecho();               // Don't echo input characters
+    nodelay(stdscr, TRUE);
+
     gettimeofday(&before_now, NULL);
 	timeout(1);
 	SetNewRandomShape();    
@@ -236,38 +243,39 @@ int main() {
         refresh();
         printf("Before While loop\n");
         newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-    while (GameOn) {
-    refresh();
-    // Check if there is any user input (keyboard)
-    if ((c = getch()) != ERR) {
-        ManipulateCurrent(c);
-    }
-
-    // Accept incoming connections and process data if available
-
-    if (newsockfd >= 0) {
-        // Read data from the accepted connection
-        memset(buffer, 0, 256);
-        n = read(newsockfd, buffer, 255);
-        if (n < 0) {
-            perror("Error reading from socket");
-            exit(EXIT_FAILURE);
-        }
-        // close(newsockfd);
         
-        // Process the received data (command)
-        c = buffer[0]; // Use received control command
-        ManipulateCurrent(c);
-        printf("Packet received Buffer:%s", buffer);
-    }
+    while (GameOn) {
+        refresh();
+        // Check if there is any user input (keyboard)
+        if ((c = getch()) != ERR) {
+            ManipulateCurrent(c);
+        }
 
-    // Check if it's time to update based on some timer
-    gettimeofday(&now, NULL);
-    if (hasToUpdate()) { // time difference in microsec accuracy
-        ManipulateCurrent('s');
-        gettimeofday(&before_now, NULL);
-    }
-}
+        // Accept incoming connections and process data if available
+
+        if (newsockfd >= 0) {
+            // Read data from the accepted connection
+            memset(buffer, 0, 256);
+            n = read(newsockfd, buffer, 255);
+            if (n < 0) {
+                perror("Error reading from socket");
+                exit(EXIT_FAILURE);
+            }
+            // close(newsockfd);
+            
+            // Process the received data (command)
+            c = buffer[0]; // Use received control command
+            ManipulateCurrent(c);
+            printf("Packet received Buffer:%s", buffer);
+        }
+
+        // Check if it's time to update based on some timer
+        gettimeofday(&now, NULL);
+        if (hasToUpdate()) { // time difference in microsec accuracy
+            ManipulateCurrent('s');
+            gettimeofday(&before_now, NULL);
+        }
+    }   
 
 	DeleteShape(current);
 	endwin();
@@ -278,7 +286,7 @@ int main() {
 		}
 		printf("\n");
 	}
-	printf("\nGame ouvre!\n");
+	printf("\nGame over!\n");
 	printf("\nScore: %d\n", score);
     return 0;
 }
